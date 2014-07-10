@@ -46,6 +46,12 @@ function query_status {
 	FULL_STATUS_CODE=`curl -k -m 15 -s -I -q ${FULL_URL} | grep HTTP`
 	SHORT_STATUS_CODE=`echo ${FULL_STATUS_CODE} | awk '{ print $2 }'`
 
+	if [ -z ${SHORT_STATUS_CODE} ]
+	then
+		FULL_STATUS_CODE="No HTTP code returned"
+		verify_offline
+	fi
+
 	if [ ${SHORT_STATUS_CODE} != "200" ]
 	then
 		verify_offline
