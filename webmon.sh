@@ -43,7 +43,7 @@ function temp_dir {
 }
 
 function query_status {
-	FULL_STATUS_CODE=`curl -m 15 -s -I -q ${FULL_URL} | grep HTTP`
+	FULL_STATUS_CODE=`curl -k -m 15 -s -I -q ${FULL_URL} | grep HTTP`
 	SHORT_STATUS_CODE=`echo ${FULL_STATUS_CODE} | awk '{ print $2 }'`
 
 	if [ ${SHORT_STATUS_CODE} != "200" ]
