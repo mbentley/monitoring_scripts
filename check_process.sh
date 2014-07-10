@@ -3,8 +3,23 @@
 SHORT_PN=$1
 LONG_PN=$2
 RUN_COUNT=0
-EMAIL_TO=mbentley@mbentley.net
-EMAIL_FROM=mbentley@mbentley.net
+EMAIL_TO=mbentley@arcus.io
+EMAIL_FROM=noreply@roche.com
+SENDMAIL=/usr/bin/mail
+
+function check_vars {
+	if [ -z ${SHORT_PN} ]
+	then
+		echo -e "You must provide a short process name as the first parameter\nExample:  ${0} sshd /usr/sbin/sshd"
+	fi
+
+	if [ -z ${LONG_PN} ]
+	then
+		echo -e "You must provide a long process name as the second parameter\nExample:  ${0} sshd /usr/sbin/sshd"
+	else
+		check_process
+	fi
+}
 
 function check_process {
 	RUN_COUNT=$(expr $RUN_COUNT + 1)
@@ -58,9 +73,9 @@ function email_notify {
 	echo "" >> $tmp
 	echo "check_process has determined that ${SHORT_PN} is not running." >> $tmp
 
-	/usr/sbin/sendmail -t -f ${EMAIL_TO} < $tmp
+	${SENDMAIL} -t -f ${EMAIL_TO} < $tmp
 
 	rm $tmp
 }
 
-check_process
+check_vars
