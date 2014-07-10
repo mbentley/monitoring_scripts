@@ -3,6 +3,8 @@
 SHORT_PN=$1
 LONG_PN=$2
 RUN_COUNT=0
+EMAIL_TO=mbentley@mbentley.net
+EMAIL_FROM=mbentley@mbentley.net
 
 function check_process {
 	RUN_COUNT=$(expr $RUN_COUNT + 1)
@@ -38,27 +40,25 @@ function process_down_verify {
 	done
 
 	if [ ${DOWN_COUNT} -eq "5" ]; then
-		echo -e "check_process has verified that ${SHORT_PN} is down.\nstarting ${SHORT_PN} now..."
-		fix_process
+		echo -e "check_process has verified that ${SHORT_PN} is down.\nsending notification now..."
+		email_notify
 	else
 		echo "re-starting check_process..."
 		check_process
 	fi
 }
 
-function fix_process {
-	/etc/init.d/${SHORT_PN} start
-
+function email_notify {
 	tmp=/tmp/check_${SHORT_PN}-`date +%F`
 	touch $tmp && chmod 600 $tmp
 
-	echo "To: mbentley@mbentley.net" >> $tmp
-	echo "From: `hostname --fqdn` <mbentley@mbentley.net>" >> $tmp
-	echo "Subject: ${SHORT_PN} on `hostname` was down" >> $tmp
+	echo "To: ${EMAIL_TO}" >> $tmp
+	echo "From: `hostname --fqdn` <${EMAIL_FROM}>" >> $tmp
+	echo "Subject: ${SHORT_PN} on `hostname` is down" >> $tmp
 	echo "" >> $tmp
-	echo "check_process has determined that ${SHORT_PN} was stopped and has restarted the process." >> $tmp
+	echo "check_process has determined that ${SHORT_PN} is not running." >> $tmp
 
-	/usr/sbin/sendmail -t -f mbentley@mbentley.net < $tmp
+	/usr/sbin/sendmail -t -f ${EMAIL_TO} < $tmp
 
 	rm $tmp
 }
