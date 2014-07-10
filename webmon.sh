@@ -1,9 +1,8 @@
 #!/bin/bash
 
-WM_DIR="/tmp/webmon"
+WEBMON_DIR="/tmp/webmon"
 SHORT_URL=${1}
 FULL_URL=${2}
-
 DOWN_FILE="down.${SHORT_URL}"
 EMAIL_TO=mbentley@arcus.io
 EMAIL_FROM=noreply@roche.com
@@ -27,9 +26,9 @@ function check_vars {
 }
 
 function temp_dir {
-	if [ ! -d "${WM_DIR}" ]
+	if [ ! -d "${WEBMON_DIR}" ]
 	then
-		mkdir ${WM_DIR}
+		mkdir ${WEBMON_DIR}
 	fi
 
 	TEMPDIR=/tmp/webmon_${SHORT_URL}_`date +%N`
@@ -75,9 +74,9 @@ function verify_offline {
 }
 
 function online_check {
-	if [ -f ${WM_DIR}/${DOWN_FILE} ]
+	if [ -f ${WEBMON_DIR}/${DOWN_FILE} ]
 	then
-		rm ${WM_DIR}/${DOWN_FILE}
+		rm ${WEBMON_DIR}/${DOWN_FILE}
 		MAIL=${TEMPDIR}/mail_`date +%F`
 		touch ${MAIL}
 		chmod 600 ${MAIL}
@@ -95,7 +94,7 @@ function online_check {
 }
 
 function email_offline {
-	if [ ! -f ${WM_DIR}/${DOWN_FILE} ]
+	if [ ! -f ${WEBMON_DIR}/${DOWN_FILE} ]
 	then
 		MAIL=${TEMPDIR}/mail_`date +%F`
 		touch ${MAIL}
@@ -110,7 +109,7 @@ function email_offline {
 		${SENDMAIL} -t -f ${EMAIL_TO} < ${MAIL}
 	fi
 
-	touch ${WM_DIR}/${DOWN_FILE}
+	touch ${WEBMON_DIR}/${DOWN_FILE}
 
 	cleanup_tmp
 }
