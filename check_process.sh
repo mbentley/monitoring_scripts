@@ -95,7 +95,7 @@ function online_check {
 		echo "From: `hostname --fqdn` <${EMAIL_FROM}>" >> ${MAIL}
 		echo "Subject: ${SHORT_PN} on `hostname` is back up" >> ${MAIL}
 		echo "" >> ${MAIL}
-		echo "check_process has determined that ${SHORT_PN} is back up." >> ${MAIL}
+		echo "check_process has determined that ${SHORT_PN} on `hostname` is back up." >> ${MAIL}
 		${SENDMAIL} -t -f ${EMAIL_TO} < ${MAIL}
 	fi
 
@@ -112,7 +112,7 @@ function email_offline {
 		echo "From: `hostname --fqdn` <${EMAIL_FROM}>" >> ${MAIL}
 		echo "Subject: ${SHORT_PN} on `hostname` is down" >> ${MAIL}
 		echo "" >> ${MAIL}
-		echo "check_process has determined that ${SHORT_PN} is not running." >> ${MAIL}
+		echo "check_process has determined that ${SHORT_PN} on `hostname` is not running." >> ${MAIL}
 		${SENDMAIL} -t -f ${EMAIL_TO} < ${MAIL}
 	fi
 
