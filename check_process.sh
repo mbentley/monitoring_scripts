@@ -1,10 +1,12 @@
 #!/bin/bash
 
-SHORT_PN=$1
-LONG_PN=$2
-RUN_COUNT=0
+CHECKPROC_DIR="/tmp/checkproc"
+SHORT_PN=${1}
+LONG_PN=${2}
+DOWN_FILE="down.${SHORT_PN}"
 EMAIL_TO=mbentley@arcus.io
 EMAIL_FROM=noreply@roche.com
+RUN_COUNT=0
 SENDMAIL=/usr/bin/mail
 
 function check_vars {
@@ -19,8 +21,24 @@ function check_vars {
 		echo -e "You must provide a long process name as the second parameter\nExample:  ${0} sshd /usr/sbin/sshd"
 		exit 1
 	else
-		check_process
+		temp_dir
 	fi
+}
+
+function temp_dir {
+	if [ ! -d "${CHECKPROC_DIR}" ]
+	then
+		mkdir ${CHECKPROC_DIR}
+	fi
+
+	TEMPDIR=/tmp/checkproc_${SHORT_PN}_`date +%N`
+	mkdir ${TEMPDIR}
+	if [ ! -d "${TEMPDIR}" ]
+	then
+		echo "unable to create temp directory"
+		exit 1
+	fi
+	check_process
 }
 
 function check_process {
@@ -32,7 +50,8 @@ function check_process {
 	fi
 
 	if ps aux | grep "${LONG_PN}" | grep -v ${0} | grep -v grep  > /dev/null ; then
-	        echo -e "${SHORT_PN} is running.\ndone."
+	        echo "${SHORT_PN} is running."
+		online_check
 	else
 		echo -e "${SHORT_PN} may be down.\nperforming further tests..."
 		sleep 2
@@ -48,7 +67,7 @@ function process_down_verify {
 		sleep 2
 
 		if ps aux | grep "${LONG_PN}" | grep -v ${0} | grep -v grep  > /dev/null ; then
-		        echo -e "false alarm, ${SHORT_PN} is running.\ndone."
+		        echo "false alarm, ${SHORT_PN} is running."
 			i=5
 		else
 		        echo "check ${i}: ${SHORT_PN} is not running..."
@@ -57,27 +76,54 @@ function process_down_verify {
 	done
 
 	if [ ${DOWN_COUNT} -eq "5" ]; then
-		echo -e "check_process has verified that ${SHORT_PN} is down.\nsending notification now..."
-		email_notify
+		echo "check_process has verified that ${SHORT_PN} is down."
+		email_offline
 	else
 		echo "re-starting check_process..."
 		check_process
 	fi
 }
 
-function email_notify {
-	tmp=/tmp/check_${SHORT_PN}-`date +%F`
-	touch $tmp && chmod 600 $tmp
+function online_check {
+	if [ -f ${CHECKPROC_DIR}/${DOWN_FILE} ]
+	then
+		rm ${CHECKPROC_DIR}/${DOWN_FILE}
+		MAIL=${TEMPDIR}/mail_`date +%F`
+		touch ${MAIL}
+		chmod 600 ${MAIL}
+		echo "To: ${EMAIL_TO}" >> ${MAIL}
+		echo "From: `hostname --fqdn` <${EMAIL_FROM}>" >> ${MAIL}
+		echo "Subject: ${SHORT_PN} on `hostname` is back up" >> ${MAIL}
+		echo "" >> ${MAIL}
+		echo "check_process has determined that ${SHORT_PN} is back up." >> ${MAIL}
+		${SENDMAIL} -t -f ${EMAIL_TO} < ${MAIL}
+	fi
 
-	echo "To: ${EMAIL_TO}" >> $tmp
-	echo "From: `hostname --fqdn` <${EMAIL_FROM}>" >> $tmp
-	echo "Subject: ${SHORT_PN} on `hostname` is down" >> $tmp
-	echo "" >> $tmp
-	echo "check_process has determined that ${SHORT_PN} is not running." >> $tmp
+	cleanup_tmp
+}
 
-	${SENDMAIL} -t -f ${EMAIL_TO} < $tmp
+function email_offline {
+	if [ ! -f ${CHECKPROC_DIR}/${DOWN_FILE} ]
+	then
+		MAIL=${TEMPDIR}/mail_`date +%F`
+		touch ${MAIL}
+		chmod 600 ${MAIL}
+		echo "To: ${EMAIL_TO}" >> ${MAIL}
+		echo "From: `hostname --fqdn` <${EMAIL_FROM}>" >> ${MAIL}
+		echo "Subject: ${SHORT_PN} on `hostname` is down" >> ${MAIL}
+		echo "" >> ${MAIL}
+		echo "check_process has determined that ${SHORT_PN} is not running." >> ${MAIL}
+		${SENDMAIL} -t -f ${EMAIL_TO} < ${MAIL}
+	fi
 
-	rm $tmp
+	touch ${CHECKPROC_DIR}/${DOWN_FILE}
+
+	cleanup_tmp
+}
+
+function cleanup_tmp {
+	rm -rf ${TEMPDIR}
+	exit 0
 }
 
 check_vars
