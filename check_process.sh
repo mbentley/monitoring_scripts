@@ -11,11 +11,13 @@ function check_vars {
 	if [ -z ${SHORT_PN} ]
 	then
 		echo -e "You must provide a short process name as the first parameter\nExample:  ${0} sshd /usr/sbin/sshd"
+		exit 1
 	fi
 
 	if [ -z ${LONG_PN} ]
 	then
 		echo -e "You must provide a long process name as the second parameter\nExample:  ${0} sshd /usr/sbin/sshd"
+		exit 1
 	else
 		check_process
 	fi
