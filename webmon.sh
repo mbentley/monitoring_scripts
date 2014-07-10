@@ -82,11 +82,11 @@ function online_check {
 		touch ${MAIL}
 		chmod 600 ${MAIL}
 		echo "To: ${EMAIL_TO}" >> ${MAIL}
-		echo "From: ${EMAIL_FROM}" >> ${MAIL}
-		echo "Subject: webmon: ${SHORT_URL} is back online" >> ${MAIL}
+		echo "From: `hostname --fqdn` <${EMAIL_FROM}>" >> ${MAIL}
+		echo "Subject: webmon: ${SHORT_URL} on `hostname` is back online" >> ${MAIL}
 		echo "" >> ${MAIL}
 		echo "webmon status:" >> ${MAIL}
-		echo "     ${FULL_URL} is back online" >> ${MAIL}
+		echo "     ${SHORT_URL} (${FULL_URL}) on `hostname` is back online" >> ${MAIL}
 		echo "     ${FULL_STATUS_CODE}" >> ${MAIL}
 		${SENDMAIL} -t -f ${EMAIL_TO} < ${MAIL}
 	fi
@@ -101,11 +101,11 @@ function email_offline {
 		touch ${MAIL}
 		chmod 600 ${MAIL}
 		echo "To: ${EMAIL_TO}" >> ${MAIL}
-		echo "From: ${EMAIL_FROM}" >> ${MAIL}
-		echo "Subject: webmon: ${SHORT_URL} is offline" >> ${MAIL}
+		echo "From: `hostname --fqdn` <${EMAIL_FROM}>" >> ${MAIL}
+		echo "Subject: webmon: ${SHORT_URL} on `hostname` is offline" >> ${MAIL}
 		echo "" >> ${MAIL}
 		echo "webmon status:" >> ${MAIL}
-		echo "     ${FULL_URL} is currently offline" >> ${MAIL}
+		echo "     ${SHORT_URL} (${FULL_URL}) on `hostname` is currently offline" >> ${MAIL}
 		echo "     ${FULL_STATUS_CODE}" >> ${MAIL}
 		${SENDMAIL} -t -f ${EMAIL_TO} < ${MAIL}
 	fi
