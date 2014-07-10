@@ -1,0 +1,138 @@
+#!/bin/bash
+
+WM_DIR="/tmp/webmon";
+FULL_URL="http://ocf.mbentley.net/forums/";
+SHORT_URL="ocf.mbentley.net";
+
+#log_file="/var/www/athena.casa.mbentley.net/webmon_logs/webmon.${SHORT_URL}.txt";
+DOWN_FILE="down.${SHORT_URL}";
+#COMMAND=$0
+EMAIL=$1
+OFFLINE_COUNT=0
+#OFFLINE_COUNT_OTHER=0
+
+function email_check {
+	if [ -z ${EMAIL} ]
+	then
+		EMAIL=mbentley@mbentley.net
+	fi
+
+	temp_dir
+}
+
+function temp_dir {
+	if [ ! -d "${WM_DIR}" ]
+	then
+		mkdir ${WM_DIR}
+	fi
+
+	if [ ! -f ${log_file} ]
+	then
+		echo -e "STATUS\tDATE/TIME\t\tSTATUS CODE" >> ${log_file}
+	fi
+
+	tempdir=/tmp/webmon_${SHORT_URL}_`date +%N`
+	mkdir ${tempdir}
+	if [ ! -d "${tempdir}" ]
+	then
+		echo "unable to create temp directory";
+		exit 1
+	fi
+	internet_check
+}
+
+function internet_check {
+	inet_check=`curl -m 15 -s -I -q http://www.google.com | grep HTTP | awk '{ print $2 }'`
+
+	if [ ${inet_check} != "200" ]
+	then
+		echo "internet connection test failed"
+		echo "skipping webmon check for ${SHORT_URL}"
+		cleanup_tmp
+	else
+		echo "internet connection test successful"
+		query_status
+	fi
+}
+
+function query_status {
+	full_status_code=`curl -m 15 -s -I -q ${FULL_URL} | grep HTTP`
+	short_status_code=`echo ${full_status_code} | awk '{ print $2 }'`
+
+	if [ $short_status_code != "200" ]
+	then
+		verify_offline
+	else
+		echo "${full_status_code}";
+		online_check
+	fi
+}
+
+function verify_offline {
+	OFFLINE_COUNT=`expr ${OFFLINE_COUNT} + 1`
+
+	if [ ${OFFLINE_COUNT} == 3 ]
+	then
+		echo "${full_status_code}";
+		email_offline
+	else
+		sleep 1
+		query_status
+	fi
+}
+
+function online_check {
+	if [ -f ${WM_DIR}/${DOWN_FILE} ]
+	then
+		# log the end of the outage
+		echo -e "UP\t`date +%F" "%R" "%Z`\t${full_status_code}" >> ${log_file}
+
+		rm ${WM_DIR}/${DOWN_FILE}
+		mail=${tempdir}/mail_`date +%F`
+		touch $mail
+		chmod 600 $mail
+		echo "To: ${EMAIL}" >> $mail
+		echo "From: ${EMAIL}" >> $mail
+		echo "Subject: webmon: ${SHORT_URL} is back online" >> $mail
+		echo "" >> $mail
+		echo "webmon status:" >> $mail
+		echo "     ${FULL_URL} is back online" >> $mail
+		echo "     ${full_status_code}" >> $mail
+		echo -e "\nwebmon logs: http://`hostname -f`/webmon_logs/webmon.${SHORT_URL}.txt" >> $mail
+		/usr/sbin/sendmail -t -f mbentley@mbentley.net < $mail
+	fi
+
+	cleanup_tmp
+}
+
+function email_offline {
+	if [ ! -f ${WM_DIR}/${DOWN_FILE} ]
+	then
+		# log the start of the outage
+		echo -e "DOWN\t`date +%F" "%R" "%Z`\t${full_status_code}" >> ${log_file}
+
+		mail=${tempdir}/mail_`date +%F`
+		touch $mail
+		chmod 600 $mail
+		echo "To: ${EMAIL}" >> $mail
+		echo "From: ${EMAIL}" >> $mail
+		echo "Subject: webmon: ${SHORT_URL} is offline" >> $mail
+		echo "" >> $mail
+		echo "webmon status:" >> $mail
+		echo "     ${FULL_URL} is currently offline" >> $mail
+		echo "     ${full_status_code}" >> $mail
+		echo -e "\nwebmon logs: http://`hostname -f`/webmon_logs/webmon.${SHORT_URL}.txt" >> $mail
+		/usr/sbin/sendmail -t -f mbentley@mbentley.net < $mail
+	fi
+
+	touch ${WM_DIR}/${DOWN_FILE}
+
+	cleanup_tmp
+}
+
+function cleanup_tmp {
+	rm -rf ${tempdir}
+	exit 0
+}
+
+email_check
