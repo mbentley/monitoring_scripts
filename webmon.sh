@@ -17,9 +17,9 @@ function check_vars {
 		exit 1
 	fi
 
-	if [ -z ${LONG_URL} ]
+	if [ -z ${FULL_URL} ]
 	then
-		echo -e "You must provide a long URL as the second parameter\nExample:  ${0} google.com http://www.google.com/"
+		echo -e "You must provide a full URL as the second parameter\nExample:  ${0} google.com http://www.google.com/"
 		exit 1
 	else
 		temp_dir
