@@ -22,7 +22,7 @@ function check_process {
 }
 
 function process_down_verify {
-	down_count=0
+	DOWN_COUNT=0
 
 	for (( i=1; i<=5; i++ ))
 	do
@@ -33,11 +33,11 @@ function process_down_verify {
 			i=5
 		else
 		        echo "check ${i}: ${SHORT_PN} is not running..."
-			down_count=$(expr $down_count + 1)
+			DOWN_COUNT=$(expr $DOWN_COUNT + 1)
 		fi
 	done
 
-	if [ ${down_count} -eq "5" ]; then
+	if [ ${DOWN_COUNT} -eq "5" ]; then
 		echo -e "check_process has verified that ${SHORT_PN} is down.\nstarting ${SHORT_PN} now..."
 		fix_process
 	else
