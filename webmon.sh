@@ -4,10 +4,11 @@ WEBMON_DIR="/tmp/webmon"
 SHORT_URL=${1}
 FULL_URL=${2}
 DOWN_FILE="down.${SHORT_URL}"
-EMAIL_TO=mbentley@arcus.io
-EMAIL_FROM=noreply@roche.com
+EMAIL_TO=mbentley@mbentley.net
+EMAIL_FROM=mbentley@mbentley.net
+LOG_FILE="/var/www/mbentley.net/neptune.mbentley.net/webmon_logs/webmon.${SHORT_URL}.txt"
 OFFLINE_COUNT=0
-SENDMAIL=/usr/bin/mail
+SENDMAIL=/usr/sbin/sendmail
 
 function check_vars {
 	if [ -z ${SHORT_URL} ]
@@ -29,6 +30,11 @@ function temp_dir {
 	if [ ! -d "${WEBMON_DIR}" ]
 	then
 		mkdir ${WEBMON_DIR}
+	fi
+
+	if [ ! -f ${LOG_FILE} ]
+	then
+		echo -e "STATUS\tDATE/TIME\t\tSTATUS CODE" > ${LOG_FILE}
 	fi
 
 	TEMPDIR=/tmp/webmon_${SHORT_URL}_`date +%N`
@@ -76,16 +82,17 @@ function verify_offline {
 function online_check {
 	if [ -f ${WEBMON_DIR}/${DOWN_FILE} ]
 	then
+		echo -e "UP\t`date +%F" "%R" "%Z`\t${FULL_STATUS_CODE}" >> ${LOG_FILE}
 		rm ${WEBMON_DIR}/${DOWN_FILE}
 		MAIL=${TEMPDIR}/mail_`date +%F`
 		touch ${MAIL}
 		chmod 600 ${MAIL}
 		echo "To: ${EMAIL_TO}" >> ${MAIL}
 		echo "From: `hostname --fqdn` <${EMAIL_FROM}>" >> ${MAIL}
-		echo "Subject: webmon: ${SHORT_URL} on `hostname` is back online" >> ${MAIL}
+		echo "Subject: webmon: ${SHORT_URL} is back online" >> ${MAIL}
 		echo "" >> ${MAIL}
 		echo "webmon status:" >> ${MAIL}
-		echo "     ${SHORT_URL} (${FULL_URL}) on `hostname` is back online" >> ${MAIL}
+		echo "     ${SHORT_URL} (${FULL_URL}) is back online" >> ${MAIL}
 		echo "     ${FULL_STATUS_CODE}" >> ${MAIL}
 		${SENDMAIL} -t -f ${EMAIL_TO} < ${MAIL}
 	fi
@@ -96,15 +103,16 @@ function online_check {
 function email_offline {
 	if [ ! -f ${WEBMON_DIR}/${DOWN_FILE} ]
 	then
+		echo -e "DOWN\t`date +%F" "%R" "%Z`\t${FULL_STATUS_CODE}" >> ${LOG_FILE}
 		MAIL=${TEMPDIR}/mail_`date +%F`
 		touch ${MAIL}
 		chmod 600 ${MAIL}
 		echo "To: ${EMAIL_TO}" >> ${MAIL}
 		echo "From: `hostname --fqdn` <${EMAIL_FROM}>" >> ${MAIL}
-		echo "Subject: webmon: ${SHORT_URL} on `hostname` is offline" >> ${MAIL}
+		echo "Subject: webmon: ${SHORT_URL} is offline" >> ${MAIL}
 		echo "" >> ${MAIL}
 		echo "webmon status:" >> ${MAIL}
-		echo "     ${SHORT_URL} (${FULL_URL}) on `hostname` is currently offline" >> ${MAIL}
+		echo "     ${SHORT_URL} (${FULL_URL}) is currently offline" >> ${MAIL}
 		echo "     ${FULL_STATUS_CODE}" >> ${MAIL}
 		${SENDMAIL} -t -f ${EMAIL_TO} < ${MAIL}
 	fi
