@@ -3,11 +3,12 @@
 CHECKPROC_DIR="/tmp/checkproc"
 SHORT_PN=${1}
 LONG_PN=${2}
+RESTART=${3:-0}
 DOWN_FILE="down.${SHORT_PN}"
 EMAIL_TO=mbentley@arcus.io
 EMAIL_FROM=noreply@roche.com
 RUN_COUNT=0
-SENDMAIL=/usr/bin/mail
+SENDMAIL=/usr/sbin/sendmail
 
 function check_vars {
 	if [ -z ${SHORT_PN} ]
@@ -118,6 +119,19 @@ function email_offline {
 
 	touch ${CHECKPROC_DIR}/${DOWN_FILE}
 
+	case ${RESTART} in
+		1|true)
+			restart_process
+			;;
+
+		*)
+			cleanup_tmp
+			;;
+	esac
+}
+
+function restart_process {
+	/etc/init.d/${SHORT_PN} restart
 	cleanup_tmp
 }
 
