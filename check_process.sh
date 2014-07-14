@@ -5,8 +5,8 @@ SHORT_PN=${1}
 LONG_PN=${2}
 RESTART=${3:-0}
 DOWN_FILE="down.${SHORT_PN}"
-EMAIL_TO=mbentley@arcus.io
-EMAIL_FROM=noreply@roche.com
+EMAIL_TO=mbentley@mbentley.net
+EMAIL_FROM=mbentley@mbentley.net
 RUN_COUNT=0
 SENDMAIL=/usr/sbin/sendmail
 
