@@ -117,22 +117,17 @@ function email_offline {
 		${SENDMAIL} -t -f ${EMAIL_TO} < ${MAIL}
 	fi
 
-	touch ${CHECKPROC_DIR}/${DOWN_FILE}
-
 	case ${RESTART} in
 		1|true)
-			restart_process
+			/etc/init.d/${SHORT_PN} restart
+			cleanup_tmp
 			;;
 
 		*)
+			touch ${CHECKPROC_DIR}/${DOWN_FILE}
 			cleanup_tmp
 			;;
 	esac
-}
-
-function restart_process {
-	/etc/init.d/${SHORT_PN} restart
-	cleanup_tmp
 }
 
 function cleanup_tmp {
