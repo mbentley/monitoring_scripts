@@ -111,18 +111,26 @@ function email_offline {
 		chmod 600 ${MAIL}
 		echo "To: ${EMAIL_TO}" >> ${MAIL}
 		echo "From: `hostname --fqdn` <${EMAIL_FROM}>" >> ${MAIL}
-		echo "Subject: ${SHORT_PN} on `hostname` is down" >> ${MAIL}
-		echo "" >> ${MAIL}
-		echo "check_process has determined that ${SHORT_PN} on `hostname` is not running." >> ${MAIL}
+		case ${RESTART} in
+			1|true)
+				echo "Subject: ${SHORT_PN} on `hostname` was down" >> ${MAIL}
+				echo "" >> ${MAIL}
+				echo "check_process has determined that ${SHORT_PN} on `hostname` was not running and has restarted it:" >> ${MAIL}
+				/etc/init.d/${SHORT_PN} restart >> ${MAIL} 2>&1
+				;;
+			*)
+				echo "Subject: ${SHORT_PN} on `hostname` is down" >> ${MAIL}
+				echo "" >> ${MAIL}
+				echo "check_process has determined that ${SHORT_PN} on `hostname` is not running." >> ${MAIL}
+				;;
+		esac
 		${SENDMAIL} -t -f ${EMAIL_TO} < ${MAIL}
 	fi
 
 	case ${RESTART} in
 		1|true)
-			/etc/init.d/${SHORT_PN} restart
 			cleanup_tmp
 			;;
-
 		*)
 			touch ${CHECKPROC_DIR}/${DOWN_FILE}
 			cleanup_tmp
