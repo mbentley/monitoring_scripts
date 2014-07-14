@@ -5,8 +5,8 @@ SHORT_PN=${1}
 LONG_PN=${2}
 RESTART=${3:-0}
 DOWN_FILE="down.${SHORT_PN}"
-EMAIL_TO=mbentley@arcus.io
-EMAIL_FROM=noreply@roche.com
+EMAIL_TO=mbentley@mbentley.net
+EMAIL_FROM=mbentley@mbentley.net
 RUN_COUNT=0
 SENDMAIL=/usr/sbin/sendmail
 
@@ -117,22 +117,17 @@ function email_offline {
 		${SENDMAIL} -t -f ${EMAIL_TO} < ${MAIL}
 	fi
 
-	touch ${CHECKPROC_DIR}/${DOWN_FILE}
-
 	case ${RESTART} in
 		1|true)
-			restart_process
+			/etc/init.d/${SHORT_PN} restart
+			cleanup_tmp
 			;;
 
 		*)
+			touch ${CHECKPROC_DIR}/${DOWN_FILE}
 			cleanup_tmp
 			;;
 	esac
-}
-
-function restart_process {
-	/etc/init.d/${SHORT_PN} restart
-	cleanup_tmp
 }
 
 function cleanup_tmp {
